@@ -189,7 +189,7 @@ body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--navy);mi
 .ann-continue-btn:hover{background:var(--navy2)}
 
 /* CARD */
-.main-wrap{max-width:660px;margin:0 auto;padding:22px 13px 56px}
+.main-wrap{max-width:660px;margin:0 auto;padding:22px 13px 110px}
 .card{background:var(--white);border-radius:var(--radius);border:1px solid var(--light);box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px}
 .card-header{background:linear-gradient(135deg,var(--navy-bg),var(--navy2));padding:24px 22px 20px;text-align:center;color:#fff}
 .card-header .ch-logo{width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid var(--orange);margin:0 auto 10px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
@@ -1480,9 +1480,12 @@ function processPhotoFile(file) {
   if (!file) return;
   if (!file.type || !file.type.startsWith('image/')) { toast('⚠️ Please choose an image file','error'); return; }
   if (file.size > 10*1024*1024) { toast('⚠️ Image too large — max 10MB','error'); return; }
-  const reader = new FileReader();
-  reader.onload = e => setPhoto(e.target.result);
-  reader.readAsDataURL(file);
+  toast('⏳ Processing photo…','');
+  resizeImageFile(file, 800, 0.75).then(dataURL => {
+    setPhoto(dataURL);
+  }).catch(() => {
+    toast('⚠️ Could not process that photo — try a different one','error');
+  });
 }
 function handlePhotoFile(input) {
   processPhotoFile(input.files[0]);
@@ -1615,7 +1618,13 @@ function submitRegistration() {
     interview:{date:'',time:'',venue:''}
   };
   students.push(student);
-  localStorage.setItem('ebara_students', JSON.stringify(students));
+  try {
+    localStorage.setItem('ebara_students', JSON.stringify(students));
+  } catch (e) {
+    students.pop();
+    toast('⚠️ Storage is full on this device — please free up space or try a different browser/device, then try again','error');
+    return;
+  }
   clearRegDraft();
   document.getElementById('success-username').textContent = username;
   document.getElementById('success-password').textContent = password;
